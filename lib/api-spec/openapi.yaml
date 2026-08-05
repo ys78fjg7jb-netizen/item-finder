@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Lost & Found API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: items
+    description: Lost and found item reports
 paths:
   /healthz:
     get:
@@ -24,6 +26,187 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /items:
+    get:
+      operationId: listItems
+      tags: [items]
+      summary: List all item reports
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [lost, found]
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: color
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: brand
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [open, resolved]
+      responses:
+        "200":
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+    post:
+      operationId: createItem
+      tags: [items]
+      summary: Report a lost or found item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemInput"
+      responses:
+        "201":
+          description: Item report created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+
+  /items/stats:
+    get:
+      operationId: getItemStats
+      tags: [items]
+      summary: Get summary statistics
+      responses:
+        "200":
+          description: Statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemStats"
+
+  /items/recent:
+    get:
+      operationId: getRecentItems
+      tags: [items]
+      summary: Get recent item reports
+      responses:
+        "200":
+          description: Recent items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+
+  /items/{id}:
+    get:
+      operationId: getItem
+      tags: [items]
+      summary: Get a single item report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Item report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateItem
+      tags: [items]
+      summary: Update an item report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemUpdate"
+      responses:
+        "200":
+          description: Updated item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteItem
+      tags: [items]
+      summary: Delete an item report
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Deleted
+
+  /items/{id}/resolve:
+    patch:
+      operationId: resolveItem
+      tags: [items]
+      summary: Mark an item as resolved (claimed/returned)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Resolved item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +217,143 @@ components:
       required:
         - status
 
+    Item:
+      type: object
+      required:
+        - id
+        - type
+        - category
+        - color
+        - brand
+        - description
+        - status
+        - reporterName
+        - reporterContact
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: number
+        type:
+          type: string
+          enum: [lost, found]
+        category:
+          type: string
+        color:
+          type: string
+        brand:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        locationDescription:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [open, resolved]
+        reporterName:
+          type: string
+        reporterContact:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ItemInput:
+      type: object
+      required:
+        - type
+        - category
+        - color
+        - brand
+        - description
+        - reporterName
+        - reporterContact
+      properties:
+        type:
+          type: string
+          enum: [lost, found]
+        category:
+          type: string
+        color:
+          type: string
+        brand:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+        locationDescription:
+          type: string
+        reporterName:
+          type: string
+        reporterContact:
+          type: string
+
+    ItemUpdate:
+      type: object
+      properties:
+        category:
+          type: string
+        color:
+          type: string
+        brand:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+        locationDescription:
+          type: string
+        reporterName:
+          type: string
+        reporterContact:
+          type: string
+        status:
+          type: string
+          enum: [open, resolved]
+
+    ItemStats:
+      type: object
+      required:
+        - totalLost
+        - totalFound
+        - totalResolved
+        - totalOpen
+        - categoryBreakdown
+      properties:
+        totalLost:
+          type: number
+        totalFound:
+          type: number
+        totalResolved:
+          type: number
+        totalOpen:
+          type: number
+        categoryBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryCount"
+
+    CategoryCount:
+      type: object
+      required:
+        - category
+        - count
+      properties:
+        category:
+          type: string
+        count:
+          type: number
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string

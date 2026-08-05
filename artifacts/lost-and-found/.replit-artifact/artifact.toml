@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Lost & Found"
+description = "A Lost & Found web platform where users can report lost items (with brand, color, item type, and photo upload) or report found items. Users can browse all reports, search by attributes, and help reunite people with their belongings."
+version = "1.0.0"
+id = "artifacts/lost-and-found"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 22474
+
+[services.development]
+run = "pnpm --filter @workspace/lost-and-found run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/lost-and-found", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/lost-and-found/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22474"
+BASE_PATH = "/"

@@ -1,36 +1,51 @@
-# [Project name]
+# FindIt — Lost & Found Platform
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A community-powered Lost & Found web platform where people report lost items or items they've found, helping reunite belongings with their owners.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/lost-and-found run dev` — run the frontend (port assigned by workflow)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- Frontend: React + Vite, Tailwind CSS, shadcn/ui, wouter routing, TanStack Query
+- API: Express 5, OpenAPI-first with Orval codegen
 - DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
+- Validation: Zod (v4), drizzle-zod
 - API codegen: Orval (from OpenAPI spec)
 - Build: esbuild (CJS bundle)
+- File uploads: multipart/form-data, stored in `artifacts/api-server/uploads/`
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — single source of truth for API contracts
+- `lib/db/src/schema/items.ts` — items table definition (Drizzle ORM)
+- `artifacts/api-server/src/routes/items.ts` — CRUD + stats + resolve endpoints
+- `artifacts/api-server/src/routes/upload.ts` — image upload endpoint (POST /api/upload)
+- `artifacts/api-server/src/app.ts` — Express app, serves `/api/uploads/` as static
+- `artifacts/lost-and-found/src/` — React frontend
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- OpenAPI-first: all API contracts live in `openapi.yaml`; never hand-write types the codegen produces
+- Image uploads are stored on the server filesystem in `artifacts/api-server/uploads/` and served via `/api/uploads/`
+- Integer types use `number` in the OpenAPI spec (not `integer`) because the installed Zod v3 doesn't have `zod.int()` — Orval would generate invalid code with `type: integer`
+- Stats and recent endpoints defined as `/items/stats` and `/items/recent` (before `/:id` in router) to avoid param capture
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Home feed with filter sidebar (type: lost/found, category, color, brand, status)
+- Stats bar showing live totals (lost, found, reunited)
+- Report form with toggle between "Lost" and "Found", photo upload support
+- Item detail page with full info, reporter contact, and "Mark as Resolved" action
+- 7 example items seeded on first run
 
 ## User preferences
 
@@ -38,7 +53,10 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Use `number` not `integer` for numeric fields in OpenAPI spec (Zod v3 limitation)
+- Routes `/items/stats` and `/items/recent` must be declared before `/items/:id` in Express to avoid param capture
+- After any OpenAPI spec change, always run codegen: `pnpm --filter @workspace/api-spec run codegen`
+- Uploaded files land in `artifacts/api-server/uploads/` — this directory is created at runtime; it's not committed
 
 ## Pointers
 
