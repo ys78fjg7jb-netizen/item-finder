@@ -37,9 +37,12 @@ export const ListItemsResponseItem = zod.object({
   "description": zod.string(),
   "imageUrl": zod.string().nullish(),
   "locationDescription": zod.string().nullish(),
+  "dateOfLoss": zod.string().nullish(),
   "status": zod.enum(['open', 'resolved']),
   "reporterName": zod.string(),
   "reporterContact": zod.string(),
+  "studentId": zod.string().nullish(),
+  "grade": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -57,8 +60,11 @@ export const CreateItemBody = zod.object({
   "description": zod.string(),
   "imageUrl": zod.string().optional(),
   "locationDescription": zod.string().optional(),
+  "dateOfLoss": zod.string().optional(),
   "reporterName": zod.string(),
-  "reporterContact": zod.string()
+  "reporterContact": zod.string(),
+  "studentId": zod.string().optional(),
+  "grade": zod.string().optional()
 })
 
 export const CreateItemResponse = zod.object({
@@ -70,9 +76,12 @@ export const CreateItemResponse = zod.object({
   "description": zod.string(),
   "imageUrl": zod.string().nullish(),
   "locationDescription": zod.string().nullish(),
+  "dateOfLoss": zod.string().nullish(),
   "status": zod.enum(['open', 'resolved']),
   "reporterName": zod.string(),
   "reporterContact": zod.string(),
+  "studentId": zod.string().nullish(),
+  "grade": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -105,9 +114,12 @@ export const GetRecentItemsResponseItem = zod.object({
   "description": zod.string(),
   "imageUrl": zod.string().nullish(),
   "locationDescription": zod.string().nullish(),
+  "dateOfLoss": zod.string().nullish(),
   "status": zod.enum(['open', 'resolved']),
   "reporterName": zod.string(),
   "reporterContact": zod.string(),
+  "studentId": zod.string().nullish(),
+  "grade": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -130,9 +142,12 @@ export const GetItemResponse = zod.object({
   "description": zod.string(),
   "imageUrl": zod.string().nullish(),
   "locationDescription": zod.string().nullish(),
+  "dateOfLoss": zod.string().nullish(),
   "status": zod.enum(['open', 'resolved']),
   "reporterName": zod.string(),
   "reporterContact": zod.string(),
+  "studentId": zod.string().nullish(),
+  "grade": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -152,8 +167,11 @@ export const UpdateItemBody = zod.object({
   "description": zod.string().optional(),
   "imageUrl": zod.string().optional(),
   "locationDescription": zod.string().optional(),
+  "dateOfLoss": zod.string().optional(),
   "reporterName": zod.string().optional(),
   "reporterContact": zod.string().optional(),
+  "studentId": zod.string().optional(),
+  "grade": zod.string().optional(),
   "status": zod.enum(['open', 'resolved']).optional()
 })
 
@@ -166,9 +184,12 @@ export const UpdateItemResponse = zod.object({
   "description": zod.string(),
   "imageUrl": zod.string().nullish(),
   "locationDescription": zod.string().nullish(),
+  "dateOfLoss": zod.string().nullish(),
   "status": zod.enum(['open', 'resolved']),
   "reporterName": zod.string(),
   "reporterContact": zod.string(),
+  "studentId": zod.string().nullish(),
+  "grade": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
@@ -200,9 +221,12 @@ export const ResolveItemResponse = zod.object({
   "description": zod.string(),
   "imageUrl": zod.string().nullish(),
   "locationDescription": zod.string().nullish(),
+  "dateOfLoss": zod.string().nullish(),
   "status": zod.enum(['open', 'resolved']),
   "reporterName": zod.string(),
   "reporterContact": zod.string(),
+  "studentId": zod.string().nullish(),
+  "grade": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })

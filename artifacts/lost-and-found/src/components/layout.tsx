@@ -10,7 +10,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="bg-primary text-primary-foreground p-1.5 rounded-lg rotate-3">
               <School size={24} />
             </div>
-            <span className="font-serif text-2xl font-bold tracking-tight text-primary">SchoolFindIt</span>
+            <span className="font-serif text-2xl font-bold tracking-tight text-primary">LaSalleFindIt</span>
           </Link>
 
           <nav className="flex items-center gap-4">
@@ -29,11 +29,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
       </header>
-
       <main className="flex-1">
         {children}
       </main>
-
       <footer className="border-t py-8 mt-auto bg-card">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           <div className="flex justify-center items-center gap-2 mb-4">
@@ -44,5 +42,5 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
     </div>
-  )
+  );
 }

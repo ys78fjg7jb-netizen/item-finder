@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, MapPin, Calendar, Mail, User, CheckCircle2, Edit2, Trash2 } from "lucide-react"
+import { ArrowLeft, MapPin, Calendar, Mail, User, CheckCircle2, Edit2, Trash2, CalendarDays, IdCard, GraduationCap } from "lucide-react"
 import { format } from "date-fns"
 import { useQueryClient } from "@tanstack/react-query"
 import { useToast } from "@/hooks/use-toast"
@@ -286,6 +286,17 @@ export default function ItemDetail() {
                           <span className="text-muted-foreground">{item.locationDescription || "Not specified"}</span>
                         </div>
                       </li>
+                      {item.type === "lost" && item.dateOfLoss && (
+                        <li className="flex items-start gap-3">
+                          <CalendarDays className="text-muted-foreground shrink-0 mt-0.5" size={18} />
+                          <div>
+                            <span className="font-medium text-foreground block">Date Lost</span>
+                            <span className="text-muted-foreground">
+                              {new Date(item.dateOfLoss + "T00:00:00").toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                            </span>
+                          </div>
+                        </li>
+                      )}
                       <li className="flex items-start gap-3">
                         <User className="text-muted-foreground shrink-0 mt-0.5" size={18} />
                         <div>
@@ -293,6 +304,24 @@ export default function ItemDetail() {
                           <span className="text-muted-foreground">{item.reporterName}</span>
                         </div>
                       </li>
+                      {item.grade && (
+                        <li className="flex items-start gap-3">
+                          <GraduationCap className="text-muted-foreground shrink-0 mt-0.5" size={18} />
+                          <div>
+                            <span className="font-medium text-foreground block">Year / Class</span>
+                            <span className="text-muted-foreground">{item.grade}</span>
+                          </div>
+                        </li>
+                      )}
+                      {item.studentId && (
+                        <li className="flex items-start gap-3">
+                          <IdCard className="text-muted-foreground shrink-0 mt-0.5" size={18} />
+                          <div>
+                            <span className="font-medium text-foreground block">Student ID</span>
+                            <span className="text-muted-foreground">{item.studentId}</span>
+                          </div>
+                        </li>
+                      )}
                     </ul>
                   </div>
 

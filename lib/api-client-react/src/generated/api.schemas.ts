@@ -36,9 +36,15 @@ export interface Item {
   imageUrl?: string | null;
   /** @nullable */
   locationDescription?: string | null;
+  /** @nullable */
+  dateOfLoss?: string | null;
   status: ItemStatus;
   reporterName: string;
   reporterContact: string;
+  /** @nullable */
+  studentId?: string | null;
+  /** @nullable */
+  grade?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -59,8 +65,11 @@ export interface ItemInput {
   description: string;
   imageUrl?: string;
   locationDescription?: string;
+  dateOfLoss?: string;
   reporterName: string;
   reporterContact: string;
+  studentId?: string;
+  grade?: string;
 }
 
 export type ItemUpdateStatus = typeof ItemUpdateStatus[keyof typeof ItemUpdateStatus];
@@ -78,8 +87,11 @@ export interface ItemUpdate {
   description?: string;
   imageUrl?: string;
   locationDescription?: string;
+  dateOfLoss?: string;
   reporterName?: string;
   reporterContact?: string;
+  studentId?: string;
+  grade?: string;
   status?: ItemUpdateStatus;
 }
 

@@ -15,6 +15,9 @@ export interface ItemInput {
   description: string;
   imageUrl?: string;
   locationDescription?: string;
+  dateOfLoss?: string;
   reporterName: string;
   reporterContact: string;
+  studentId?: string;
+  grade?: string;
 }

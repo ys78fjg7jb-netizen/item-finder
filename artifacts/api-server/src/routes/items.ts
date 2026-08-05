@@ -89,8 +89,11 @@ router.post("/items", async (req, res): Promise<void> => {
       description: parsed.data.description,
       imageUrl: parsed.data.imageUrl ?? null,
       locationDescription: parsed.data.locationDescription ?? null,
+      dateOfLoss: parsed.data.dateOfLoss ?? null,
       reporterName: parsed.data.reporterName,
       reporterContact: parsed.data.reporterContact,
+      studentId: parsed.data.studentId ?? null,
+      grade: parsed.data.grade ?? null,
       status: "open",
     })
     .returning();
@@ -142,10 +145,13 @@ router.patch("/items/:id", async (req, res): Promise<void> => {
       ...(parsed.data.locationDescription !== undefined && {
         locationDescription: parsed.data.locationDescription,
       }),
+      ...(parsed.data.dateOfLoss !== undefined && { dateOfLoss: parsed.data.dateOfLoss }),
       ...(parsed.data.reporterName !== undefined && { reporterName: parsed.data.reporterName }),
       ...(parsed.data.reporterContact !== undefined && {
         reporterContact: parsed.data.reporterContact,
       }),
+      ...(parsed.data.studentId !== undefined && { studentId: parsed.data.studentId }),
+      ...(parsed.data.grade !== undefined && { grade: parsed.data.grade }),
       ...(parsed.data.status !== undefined && { status: parsed.data.status }),
       updatedAt: new Date(),
     })

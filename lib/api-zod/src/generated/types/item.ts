@@ -19,9 +19,15 @@ export interface Item {
   imageUrl?: string | null;
   /** @nullable */
   locationDescription?: string | null;
+  /** @nullable */
+  dateOfLoss?: string | null;
   status: ItemStatus;
   reporterName: string;
   reporterContact: string;
+  /** @nullable */
+  studentId?: string | null;
+  /** @nullable */
+  grade?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
