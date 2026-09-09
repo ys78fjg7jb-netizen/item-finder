@@ -1,0 +1,41 @@
+[1mdiff --git a/artifacts/api-server/src/index.ts b/artifacts/api-server/src/index.ts[m
+[1mindex f3f502b..84cefe0 100644[m
+[1m--- a/artifacts/api-server/src/index.ts[m
+[1m+++ b/artifacts/api-server/src/index.ts[m
+[36m@@ -16,21 +16,21 @@[m [mif (Number.isNaN(port) || port <= 0) {[m
+   throw new Error(`Invalid PORT value: "${rawPort}"`);[m
+ }[m
+ [m
+[31m-async function start(): Promise<void> {[m
+[31m-  try {[m
+[31m-    await ensureDatabaseReady();[m
+[31m-    app.listen(port, (err) => {[m
+[31m-      if (err) {[m
+[31m-        logger.error({ err }, "Error listening on port");[m
+[31m-        process.exit(1);[m
+[31m-      }[m
+[31m-[m
+[31m-      logger.info({ port }, "Server listening");[m
+[31m-    });[m
+[31m-  } catch (err) {[m
+[31m-    logger.error({ err }, "Database initialization failed");[m
+[32m+[m[32mconst server = app.listen(port, (err) => {[m
+[32m+[m[32m  if (err) {[m
+[32m+[m[32m    logger.error({ err }, "Error listening on port");[m
+     process.exit(1);[m
+   }[m
+[31m-}[m
+ [m
+[31m-void start();[m
+[32m+[m[32m  logger.info({ port }, "Server listening");[m
+[32m+[m
+[32m+[m[32m  // Do not block the port health check on a cold Neon connection.[m
+[32m+[m[32m  void ensureDatabaseReady().catch((err) => {[m
+[32m+[m[32m    logger.error({ err }, "Database initialization failed");[m
+[32m+[m[32m  });[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m[32mserver.on("error", (err) => {[m
+[32m+[m[32m  logger.error({ err }, "API server error");[m
+[32m+[m[32m  process.exit(1);[m
+[32m+[m[32m});[m
