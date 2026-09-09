@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
-import itemsRouter from "./items";
+import itemsRouter from "./memory-items";
 import uploadRouter from "./upload";
 
 const router: IRouter = Router();

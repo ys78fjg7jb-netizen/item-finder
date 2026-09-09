@@ -1,6 +1,5 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { ensureDatabaseReady } from "@workspace/db";
 
 const rawPort = process.env["PORT"];
 
@@ -23,11 +22,6 @@ const server = app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
-
-  // Do not block the port health check on a cold Neon connection.
-  void ensureDatabaseReady().catch((err) => {
-    logger.error({ err }, "Database initialization failed");
-  });
 });
 
 server.on("error", (err) => {
