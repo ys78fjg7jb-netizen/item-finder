@@ -13,24 +13,24 @@ if (!rawPort) {
 const port = Number(rawPort);
 
 if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
+  throw new Error(`Invalid port: "${rawPort}"`);
 }
 
-async function start(): Promise<void> {
-  try {
-    await ensureDatabaseReady();
-    app.listen(port, (err) => {
-      if (err) {
-        logger.error({ err }, "Error listening on port");
-        process.exit(1);
-      }
-
-      logger.info({ port }, "Server listening");
-    });
-  } catch (err) {
-    logger.error({ err }, "Database initialization failed");
+const server = app.listen(port, (err) => {
+  if (err) {
+    logger.error({ err }, "Error listening on port");
     process.exit(1);
   }
-}
 
-void start();
+  logger.info({ port }, "Server listening");
+
+  // Do not block the port health check on a cold Neon connection.
+  void ensureDatabaseReady().catch((err) => {
+    logger.error({ err }, "Database initialization failed");
+  });
+});
+
+server.on("error", (err) => {
+  logger.error({ err }, "API server error");
+  process.exit(1);
+});
