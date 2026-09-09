@@ -1,4 +1,4 @@
-import express, { type Express } from "express";
+import express, { type ErrorRequestHandler, type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import { join } from "path";
@@ -35,5 +35,17 @@ const uploadsDir = join(process.cwd(), "uploads");
 app.use("/api/uploads", express.static(uploadsDir));
 
 app.use("/api", router);
+
+const apiErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+
+  logger.error({ err, method: req.method, url: req.originalUrl, requestId: req.id }, "Unhandled API error");
+  res.status(500).json({ error: "Internal server error", requestId: req.id });
+};
+
+app.use(apiErrorHandler);
 
 export default app;

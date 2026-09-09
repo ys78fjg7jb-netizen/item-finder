@@ -40,6 +40,7 @@ export default function ReportItem() {
   const [uploadError, setUploadError] = React.useState("")
   const [imageUrl, setImageUrl] = React.useState<string>("")
   const [imagePreview, setImagePreview] = React.useState<string>("")
+  const [submitError, setSubmitError] = React.useState("")
 
   const createItem = useCreateItem()
 
@@ -66,6 +67,13 @@ export default function ReportItem() {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    setSubmitError("")
+    const form = e.currentTarget
+    if (!form.reportValidity()) {
+      setSubmitError("Please complete the highlighted required fields before posting.")
+      form.querySelector<HTMLElement>(":invalid")?.focus()
+      return
+    }
     const fd = new FormData(e.currentTarget)
 
     createItem.mutate({
@@ -88,8 +96,10 @@ export default function ReportItem() {
         toast({ title: "Notice Posted", description: "Your item has been added to the school notice board." })
         setLocation(`/items/${data.id}`)
       },
-      onError: () => {
-        toast({ title: "Error", description: "Could not post the notice. Please check your fields and try again.", variant: "destructive" })
+      onError: (error) => {
+        const message = error instanceof Error && error.message ? error.message : "The server could not save this notice. Please try again."
+        setSubmitError(message)
+        toast({ title: "Could not post notice", description: message, variant: "destructive" })
       },
     })
   }
@@ -326,6 +336,11 @@ export default function ReportItem() {
                 >
                   {createItem.isPending ? "Posting..." : `Post ${type === "lost" ? "Lost" : "Found"} Notice`}
                 </Button>
+                {submitError && (
+                  <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                    {submitError}
+                  </p>
+                )}
 
               </form>
             </CardContent>

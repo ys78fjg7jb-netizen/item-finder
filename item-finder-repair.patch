@@ -1,0 +1,206 @@
+From c2bfcb2dfd4d0feba7f0214d3ac4c3e1f1b18000 Mon Sep 17 00:00:00 2001
+From: Manus Repair Agent <manus-repair-agent@users.noreply.github.com>
+Date: Wed, 9 Sep 2026 02:33:26 +0000
+Subject: [PATCH] Fix notice posting and production API failures
+
+---
+ artifacts/api-server/src/app.ts               | 14 ++++++++++-
+ artifacts/api-server/src/index.ts             | 21 ++++++++++++----
+ artifacts/lost-and-found/src/pages/home.tsx   | 16 +++++++++++--
+ artifacts/lost-and-found/src/pages/report.tsx | 19 +++++++++++++--
+ lib/db/src/index.ts                           | 24 +++++++++++++++++++
+ 5 files changed, 84 insertions(+), 10 deletions(-)
+
+diff --git a/artifacts/api-server/src/app.ts b/artifacts/api-server/src/app.ts
+index b2e7bd1..2922f20 100644
+--- a/artifacts/api-server/src/app.ts
++++ b/artifacts/api-server/src/app.ts
+@@ -1,4 +1,4 @@
+-import express, { type Express } from "express";
++import express, { type ErrorRequestHandler, type Express } from "express";
+ import cors from "cors";
+ import pinoHttp from "pino-http";
+ import { join } from "path";
+@@ -36,4 +36,16 @@ app.use("/api/uploads", express.static(uploadsDir));
+ 
+ app.use("/api", router);
+ 
++const apiErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
++  if (res.headersSent) {
++    next(err);
++    return;
++  }
++
++  logger.error({ err, method: req.method, url: req.originalUrl, requestId: req.id }, "Unhandled API error");
++  res.status(500).json({ error: "Internal server error", requestId: req.id });
++};
++
++app.use(apiErrorHandler);
++
+ export default app;
+diff --git a/artifacts/api-server/src/index.ts b/artifacts/api-server/src/index.ts
+index b1f024d..f3f502b 100644
+--- a/artifacts/api-server/src/index.ts
++++ b/artifacts/api-server/src/index.ts
+@@ -1,5 +1,6 @@
+ import app from "./app";
+ import { logger } from "./lib/logger";
++import { ensureDatabaseReady } from "@workspace/db";
+ 
+ const rawPort = process.env["PORT"];
+ 
+@@ -15,11 +16,21 @@ if (Number.isNaN(port) || port <= 0) {
+   throw new Error(`Invalid PORT value: "${rawPort}"`);
+ }
+ 
+-app.listen(port, (err) => {
+-  if (err) {
+-    logger.error({ err }, "Error listening on port");
++async function start(): Promise<void> {
++  try {
++    await ensureDatabaseReady();
++    app.listen(port, (err) => {
++      if (err) {
++        logger.error({ err }, "Error listening on port");
++        process.exit(1);
++      }
++
++      logger.info({ port }, "Server listening");
++    });
++  } catch (err) {
++    logger.error({ err }, "Database initialization failed");
+     process.exit(1);
+   }
++}
+ 
+-  logger.info({ port }, "Server listening");
+-});
++void start();
+diff --git a/artifacts/lost-and-found/src/pages/home.tsx b/artifacts/lost-and-found/src/pages/home.tsx
+index 4e5b7b4..63409c3 100644
+--- a/artifacts/lost-and-found/src/pages/home.tsx
++++ b/artifacts/lost-and-found/src/pages/home.tsx
+@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
+ import { Badge } from "@/components/ui/badge"
+ import { Button } from "@/components/ui/button"
+ import { Input } from "@/components/ui/input"
+-import { MapPin, Calendar, Search, FilterX, Clock } from "lucide-react"
++import { MapPin, Calendar, Search, FilterX, Clock, RefreshCw, TriangleAlert } from "lucide-react"
+ import { format } from "date-fns"
+ import { Link } from "wouter"
+ 
+@@ -37,7 +37,7 @@ export default function Home() {
+     ...(filters.status && { status: filters.status as any }),
+   }
+ 
+-  const { data: items, isLoading: itemsLoading } = useListItems(apiParams, {
++  const { data: items, isLoading: itemsLoading, isError: itemsError, refetch: refetchItems } = useListItems(apiParams, {
+     query: {
+       queryKey: getListItemsQueryKey(apiParams),
+     }
+@@ -210,6 +210,18 @@ export default function Home() {
+                   <div key={i} className="h-[300px] rounded-xl bg-card border animate-pulse"></div>
+                 ))}
+               </div>
++            ) : itemsError ? (
++              <div className="text-center py-20 bg-card border border-destructive/30 border-dashed rounded-xl">
++                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
++                  <TriangleAlert className="text-destructive" size={24} />
++                </div>
++                <h3 className="text-lg font-semibold text-foreground">The notice board is temporarily unavailable</h3>
++                <p className="text-muted-foreground mt-2 mb-6">We could not load notices right now. Your filters are still saved—please try again.</p>
++                <Button variant="outline" onClick={() => void refetchItems()}>
++                  <RefreshCw className="mr-2" size={16} />
++                  Try again
++                </Button>
++              </div>
+             ) : displayedItems.length === 0 ? (
+               <div className="text-center py-24 bg-card border border-dashed rounded-xl">
+                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-muted mb-4">
+diff --git a/artifacts/lost-and-found/src/pages/report.tsx b/artifacts/lost-and-found/src/pages/report.tsx
+index 1581e99..22ea1a9 100644
+--- a/artifacts/lost-and-found/src/pages/report.tsx
++++ b/artifacts/lost-and-found/src/pages/report.tsx
+@@ -40,6 +40,7 @@ export default function ReportItem() {
+   const [uploadError, setUploadError] = React.useState("")
+   const [imageUrl, setImageUrl] = React.useState<string>("")
+   const [imagePreview, setImagePreview] = React.useState<string>("")
++  const [submitError, setSubmitError] = React.useState("")
+ 
+   const createItem = useCreateItem()
+ 
+@@ -66,6 +67,13 @@ export default function ReportItem() {
+ 
+   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+     e.preventDefault()
++    setSubmitError("")
++    const form = e.currentTarget
++    if (!form.reportValidity()) {
++      setSubmitError("Please complete the highlighted required fields before posting.")
++      form.querySelector<HTMLElement>(":invalid")?.focus()
++      return
++    }
+     const fd = new FormData(e.currentTarget)
+ 
+     createItem.mutate({
+@@ -88,8 +96,10 @@ export default function ReportItem() {
+         toast({ title: "Notice Posted", description: "Your item has been added to the school notice board." })
+         setLocation(`/items/${data.id}`)
+       },
+-      onError: () => {
+-        toast({ title: "Error", description: "Could not post the notice. Please check your fields and try again.", variant: "destructive" })
++      onError: (error) => {
++        const message = error instanceof Error && error.message ? error.message : "The server could not save this notice. Please try again."
++        setSubmitError(message)
++        toast({ title: "Could not post notice", description: message, variant: "destructive" })
+       },
+     })
+   }
+@@ -326,6 +336,11 @@ export default function ReportItem() {
+                 >
+                   {createItem.isPending ? "Posting..." : `Post ${type === "lost" ? "Lost" : "Found"} Notice`}
+                 </Button>
++                {submitError && (
++                  <p role="alert" className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
++                    {submitError}
++                  </p>
++                )}
+ 
+               </form>
+             </CardContent>
+diff --git a/lib/db/src/index.ts b/lib/db/src/index.ts
+index 50cbf48..9ff4c4f 100644
+--- a/lib/db/src/index.ts
++++ b/lib/db/src/index.ts
+@@ -13,4 +13,28 @@ if (!process.env.DATABASE_URL) {
+ export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+ export const db = drizzle(pool, { schema });
+ 
++/** Ensure a freshly provisioned deployment has the table required by every item route. */
++export async function ensureDatabaseReady(): Promise<void> {
++  await pool.query(`
++    CREATE TABLE IF NOT EXISTS items (
++      id SERIAL PRIMARY KEY,
++      type TEXT NOT NULL,
++      category TEXT NOT NULL,
++      color TEXT NOT NULL,
++      brand TEXT NOT NULL,
++      description TEXT NOT NULL,
++      image_url TEXT,
++      location_description TEXT,
++      date_of_loss TEXT,
++      status TEXT NOT NULL DEFAULT 'open',
++      reporter_name TEXT NOT NULL,
++      reporter_contact TEXT NOT NULL,
++      student_id TEXT,
++      grade TEXT,
++      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
++      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
++    )
++  `);
++}
++
+ export * from "./schema";
+-- 
+2.43.0
+

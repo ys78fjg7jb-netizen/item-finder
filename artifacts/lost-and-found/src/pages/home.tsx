@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { MapPin, Calendar, Search, FilterX, Clock } from "lucide-react"
+import { MapPin, Calendar, Search, FilterX, Clock, RefreshCw, TriangleAlert } from "lucide-react"
 import { format } from "date-fns"
 import { Link } from "wouter"
 
@@ -37,7 +37,7 @@ export default function Home() {
     ...(filters.status && { status: filters.status as any }),
   }
 
-  const { data: items, isLoading: itemsLoading } = useListItems(apiParams, {
+  const { data: items, isLoading: itemsLoading, isError: itemsError, refetch: refetchItems } = useListItems(apiParams, {
     query: {
       queryKey: getListItemsQueryKey(apiParams),
     }
@@ -209,6 +209,18 @@ export default function Home() {
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className="h-[300px] rounded-xl bg-card border animate-pulse"></div>
                 ))}
+              </div>
+            ) : itemsError ? (
+              <div className="text-center py-20 bg-card border border-destructive/30 border-dashed rounded-xl">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 mb-4">
+                  <TriangleAlert className="text-destructive" size={24} />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground">The notice board is temporarily unavailable</h3>
+                <p className="text-muted-foreground mt-2 mb-6">We could not load notices right now. Your filters are still saved—please try again.</p>
+                <Button variant="outline" onClick={() => void refetchItems()}>
+                  <RefreshCw className="mr-2" size={16} />
+                  Try again
+                </Button>
               </div>
             ) : displayedItems.length === 0 ? (
               <div className="text-center py-24 bg-card border border-dashed rounded-xl">
